@@ -5,9 +5,9 @@ import type { Config, McpServerConfig } from "./types.js";
 
 function getConfigDir(): string {
   if (process.platform === "darwin") {
-    return path.join(os.homedir(), "Library", "Application Support", "mcp-bridge");
+    return path.join(os.homedir(), "Library", "Application Support", "mcp-central");
   }
-  return path.join(os.homedir(), ".config", "mcp-bridge");
+  return path.join(os.homedir(), ".config", "mcp-central");
 }
 
 function getConfigPath(): string {

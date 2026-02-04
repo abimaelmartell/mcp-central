@@ -46,7 +46,7 @@ export class Router {
           tools: { listChanged: false },
         },
         serverInfo: {
-          name: "mcp-bridge",
+          name: "mcp-central",
           version: "0.1.0",
         },
       },

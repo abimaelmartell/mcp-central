@@ -1,11 +1,11 @@
 {
-  "name": "mcp-bridge",
+  "name": "mcp-central",
   "version": "0.1.0",
   "description": "MCP aggregator - connect multiple MCP servers through a single endpoint",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "mcp-bridge": "dist/cli.js"
+    "mcp-central": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",

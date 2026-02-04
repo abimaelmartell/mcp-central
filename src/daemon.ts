@@ -9,7 +9,7 @@ export async function runDaemon(config: Config, port: number): Promise<void> {
 
   const connected = manager.getConnectedMcps();
   if (connected.length === 0) {
-    console.error("No MCP servers connected. Add servers with 'mcp-bridge add'");
+    console.error("No MCP servers connected. Add servers with 'mcp-central add'");
   } else {
     console.error(`Connected to ${connected.length} MCP servers: ${connected.join(", ")}`);
   }
@@ -21,7 +21,7 @@ export async function runDaemon(config: Config, port: number): Promise<void> {
   app.get("/health", async () => {
     return {
       status: "ok",
-      service: "mcp-bridge",
+      service: "mcp-central",
       version: "0.1.0",
       connected: manager.getConnectedMcps(),
     };

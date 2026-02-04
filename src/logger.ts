@@ -20,9 +20,9 @@ const ROTATE_THRESHOLD = 6000;
 
 function getLogDir(): string {
   if (process.platform === "darwin") {
-    return path.join(os.homedir(), "Library", "Application Support", "mcp-bridge");
+    return path.join(os.homedir(), "Library", "Application Support", "mcp-central");
   }
-  return path.join(os.homedir(), ".config", "mcp-bridge");
+  return path.join(os.homedir(), ".config", "mcp-central");
 }
 
 function getLogPath(): string {

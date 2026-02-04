@@ -1,10 +1,10 @@
-# mcp-bridge
+# mcp-central
 
 MCP aggregator - connect to multiple MCP servers through a single endpoint.
 
 ```
 ┌──────────────────┐      ┌─────────────────────────────────────┐
-│  Claude Desktop  │      │            mcp-bridge               │
+│  Claude Desktop  │      │            mcp-central               │
 │  Cursor          │─────▶│                                     │
 │  Any MCP Client  │      │   ┌─────┐  ┌─────┐  ┌─────┐        │
 └──────────────────┘      │   │github│  │slack│  │ fs  │  ...   │
@@ -15,27 +15,27 @@ MCP aggregator - connect to multiple MCP servers through a single endpoint.
 ## Install
 
 ```bash
-npm install -g mcp-bridge
+npm install -g mcp-central
 ```
 
 Or run directly with npx:
 
 ```bash
-npx mcp-bridge --help
+npx mcp-central --help
 ```
 
 ## Usage
 
 ```bash
 # Add MCP servers
-mcp-bridge add github npx -y @modelcontextprotocol/server-github
-mcp-bridge add fs npx -y @modelcontextprotocol/server-filesystem /tmp
+mcp-central add github npx -y @modelcontextprotocol/server-github
+mcp-central add fs npx -y @modelcontextprotocol/server-filesystem /tmp
 
 # List configured servers
-mcp-bridge list
+mcp-central list
 
 # Remove a server
-mcp-bridge remove github
+mcp-central remove github
 ```
 
 ## Connect
@@ -46,7 +46,7 @@ mcp-bridge remove github
   "mcpServers": {
     "bridge": {
       "command": "npx",
-      "args": ["mcp-bridge", "serve"]
+      "args": ["mcp-central", "serve"]
     }
   }
 }
@@ -54,7 +54,7 @@ mcp-bridge remove github
 
 **HTTP daemon** (for apps):
 ```bash
-mcp-bridge daemon -p 3000
+mcp-central daemon -p 3000
 ```
 
 ## Logs
@@ -62,10 +62,10 @@ mcp-bridge daemon -p 3000
 View tool usage history:
 
 ```bash
-mcp-bridge logs           # last 20 entries
-mcp-bridge logs -n 50     # last 50 entries
-mcp-bridge logs --all     # full history
-mcp-bridge logs -f        # live tail (follow)
+mcp-central logs           # last 20 entries
+mcp-central logs -n 50     # last 50 entries
+mcp-central logs --all     # full history
+mcp-central logs -f        # live tail (follow)
 ```
 
 Output:
@@ -94,8 +94,8 @@ slack   + send_message  →  slack__send_message
 ## Config
 
 Stored at:
-- macOS: `~/Library/Application Support/mcp-bridge/config.json`
-- Linux: `~/.config/mcp-bridge/config.json`
+- macOS: `~/Library/Application Support/mcp-central/config.json`
+- Linux: `~/.config/mcp-central/config.json`
 
 ```json
 {
@@ -124,7 +124,7 @@ Stored at:
                              │ stdio/http
                              ▼
 ┌────────────────────────────────────────────────────┐
-│                    mcp-bridge                      │
+│                    mcp-central                      │
 │  ┌──────────┐    ┌────────────┐    ┌───────────┐  │
 │  │  Server  │───▶│   Router   │───▶│  Manager  │  │
 │  │stdio/http│    │            │    │           │  │

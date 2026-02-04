@@ -24,7 +24,7 @@ describe("router", () => {
 
       expect(response.result).toMatchObject({
         protocolVersion: "2024-11-05",
-        serverInfo: { name: "mcp-bridge" },
+        serverInfo: { name: "mcp-central" },
       });
     });
   });

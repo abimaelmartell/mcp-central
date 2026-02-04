@@ -12,7 +12,7 @@ MCP Bridge is an aggregator/proxy for MCP (Model Context Protocol) servers. It c
 - **commander** - CLI parsing
 - **fastify** - HTTP server (daemon mode)
 - **vitest** - testing
-- Distributed via npm, runnable with `npx mcp-bridge`
+- Distributed via npm, runnable with `npx mcp-central`
 
 ## Project Status
 
@@ -75,8 +75,8 @@ const ROTATE_THRESHOLD = 6000;   // Rotate when hitting 6000
 ```
 
 **Config/logs location:**
-- macOS: `~/Library/Application Support/mcp-bridge/`
-- Linux: `~/.config/mcp-bridge/`
+- macOS: `~/Library/Application Support/mcp-central/`
+- Linux: `~/.config/mcp-central/`
 - Files: `config.json`, `usage.log`
 
 ## Conventions

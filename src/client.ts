@@ -108,7 +108,7 @@ export class StdioClient {
     const response = await this.request("initialize", {
       protocolVersion: "2024-11-05",
       capabilities: {},
-      clientInfo: { name: "mcp-bridge", version: "0.1.0" },
+      clientInfo: { name: "mcp-central", version: "0.1.0" },
     });
 
     if (response.error) {

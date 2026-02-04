@@ -11,7 +11,7 @@ export async function runStdioServer(config: Config): Promise<void> {
 
   const connected = manager.getConnectedMcps();
   if (connected.length === 0) {
-    console.error("No MCP servers connected. Add servers with 'mcp-bridge add'");
+    console.error("No MCP servers connected. Add servers with 'mcp-central add'");
   } else {
     console.error(`Connected to ${connected.length} MCP servers: ${connected.join(", ")}`);
   }

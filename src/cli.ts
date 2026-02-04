@@ -8,7 +8,7 @@ import { readLogs, watchLogs, formatLogEntry, formatLogHeader, formatWatchingHea
 import type { McpServerConfig } from "./types.js";
 
 program
-  .name("mcp-bridge")
+  .name("mcp-central")
   .description("MCP aggregator - connect multiple MCP servers through a single endpoint")
   .version("0.1.0");
 
@@ -63,7 +63,7 @@ program
 
     if (config.servers.length === 0) {
       console.log("No MCP servers configured.");
-      console.log("\nAdd one with: mcp-bridge add <name> <command> [args...]");
+      console.log("\nAdd one with: mcp-central add <name> <command> [args...]");
       return;
     }
 
