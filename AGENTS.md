@@ -11,18 +11,21 @@ MCP Bridge is an aggregator/proxy for MCP (Model Context Protocol) servers. It c
 - **TypeScript** + Node.js (>=18)
 - **commander** - CLI parsing
 - **fastify** - HTTP server (daemon mode)
+- **vitest** - testing
 - Distributed via npm, runnable with `npx mcp-bridge`
 
 ## Project Status
 
 **Working:**
-- CLI commands: add, remove, list, serve, daemon
+- CLI commands: add, remove, list, serve, daemon, logs
 - Config management (JSON)
 - stdio MCP client (connects to backend MCPs)
 - stdio MCP server (for clients like Claude Desktop)
 - HTTP daemon mode (for future Mac app)
 - Tool namespacing (`{mcp}__{tool}`)
 - Request routing to correct backend MCP
+- Usage logging with auto-rotation (max 5000 entries)
+- Live log tailing (`logs -f`)
 
 **Not implemented yet:**
 - Resources aggregation (`resources/list`, `resources/read`)
@@ -40,10 +43,11 @@ src/
 ├── types.ts      # JSON-RPC types, MCP types, Config types
 ├── config.ts     # loadConfig, saveConfig, addServer, removeServer
 ├── client.ts     # StdioClient - connects to one MCP via stdio
-├── manager.ts    # McpManager - manages multiple StdioClients
+├── manager.ts    # McpManager - manages multiple StdioClients, logs calls
 ├── router.ts     # Router - handles requests, routes to correct MCP
 ├── server.ts     # runStdioServer() - stdio server for MCP clients
-└── daemon.ts     # runDaemon() - HTTP server with /mcp, /health, /tools
+├── daemon.ts     # runDaemon() - HTTP server with /mcp, /health, /tools
+└── logger.ts     # Usage logging with rotation, formatting, live watching
 ```
 
 ## Key Patterns
@@ -59,11 +63,21 @@ export function parseNamespacedTool(namespaced: string): { mcp: string; tool: st
 **Request flow:**
 ```
 Client request → server.ts → Router.handleRequest() → McpManager.callTool() → StdioClient
+                                                              ↓
+                                                        logger.ts (logs tool call)
 ```
 
-**Config location:**
-- macOS: `~/Library/Application Support/mcp-bridge/config.json`
-- Linux: `~/.config/mcp-bridge/config.json`
+**Log rotation:**
+```typescript
+// logger.ts
+const MAX_LOG_ENTRIES = 5000;    // Keep last 5000 entries
+const ROTATE_THRESHOLD = 6000;   // Rotate when hitting 6000
+```
+
+**Config/logs location:**
+- macOS: `~/Library/Application Support/mcp-bridge/`
+- Linux: `~/.config/mcp-bridge/`
+- Files: `config.json`, `usage.log`
 
 ## Conventions
 
@@ -78,15 +92,22 @@ Client request → server.ts → Router.handleRequest() → McpManager.callTool(
 npm run build      # compile TypeScript
 npm run dev        # watch mode
 npm run typecheck  # type check only
-node dist/cli.js   # run CLI
+npm test           # run vitest
+npm run test:watch # vitest watch mode
 ```
 
 ## Testing
 
 ```bash
-node dist/cli.js list                    # test CLI
+# Unit tests
+npm test
+
+# Manual CLI testing
+node dist/cli.js list
 node dist/cli.js add echo npx -y @modelcontextprotocol/server-everything
-node dist/cli.js serve                   # then send JSON-RPC to stdin
+node dist/cli.js serve    # then send JSON-RPC to stdin
+node dist/cli.js logs     # view usage logs
+node dist/cli.js logs -f  # live tail
 ```
 
 ## HTTP Daemon Endpoints
@@ -100,5 +121,6 @@ node dist/cli.js serve                   # then send JSON-RPC to stdin
 1. **Mac app** - SwiftUI frontend using daemon mode as backend
 2. **SSE transport** - Connect to remote MCPs over HTTP
 3. **Tool filtering** - Allow/block specific tools per MCP
-4. **Status dashboard** - Show connected MCPs, tool counts, errors
+4. **Reconnection** - Auto-reconnect failed MCP connections
 5. **npm publish** - Publish to npm registry
+6. **Metrics** - Track call counts, error rates, latencies
