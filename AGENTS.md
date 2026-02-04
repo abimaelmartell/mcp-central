@@ -6,11 +6,18 @@ Context file for AI agents working on this project.
 
 MCP Bridge is an aggregator/proxy for MCP (Model Context Protocol) servers. It connects to multiple MCP servers and exposes them as a single unified MCP endpoint. Clients connect to one MCP (the bridge) and get access to all tools from all registered servers.
 
+## Tech Stack
+
+- **TypeScript** + Node.js (>=18)
+- **commander** - CLI parsing
+- **fastify** - HTTP server (daemon mode)
+- Distributed via npm, runnable with `npx mcp-bridge`
+
 ## Project Status
 
 **Working:**
 - CLI commands: add, remove, list, serve, daemon
-- Config management (TOML)
+- Config management (JSON)
 - stdio MCP client (connects to backend MCPs)
 - stdio MCP server (for clients like Claude Desktop)
 - HTTP daemon mode (for future Mac app)
@@ -20,7 +27,6 @@ MCP Bridge is an aggregator/proxy for MCP (Model Context Protocol) servers. It c
 **Not implemented yet:**
 - Resources aggregation (`resources/list`, `resources/read`)
 - Prompts aggregation (`prompts/list`, `prompts/get`)
-- JSON import from Claude Desktop config
 - Reconnection logic for failed MCPs
 - Enable/disable individual servers via CLI
 - Environment variable support in CLI (`--env KEY=VALUE`)
@@ -29,68 +35,65 @@ MCP Bridge is an aggregator/proxy for MCP (Model Context Protocol) servers. It c
 
 ```
 src/
-├── main.rs           # CLI entry, clap commands
-├── config/
-│   ├── types.rs      # Config, McpServerConfig, Settings
-│   └── loader.rs     # load_config, save_config, add_server, remove_server
-├── protocol/
-│   └── types.rs      # JSON-RPC types, MCP types, namespace_tool()
-├── client/
-│   ├── stdio.rs      # StdioClient - connects to one MCP via stdio
-│   └── manager.rs    # McpManager - manages multiple StdioClients
-├── server/
-│   ├── stdio.rs      # run() - stdio server for MCP clients
-│   └── http.rs       # run() - HTTP daemon with /mcp and /health endpoints
-└── aggregator/
-    └── router.rs     # Router - handles requests, routes to correct MCP
+├── cli.ts        # CLI entry point (commander)
+├── index.ts      # Library exports
+├── types.ts      # JSON-RPC types, MCP types, Config types
+├── config.ts     # loadConfig, saveConfig, addServer, removeServer
+├── client.ts     # StdioClient - connects to one MCP via stdio
+├── manager.ts    # McpManager - manages multiple StdioClients
+├── router.ts     # Router - handles requests, routes to correct MCP
+├── server.ts     # runStdioServer() - stdio server for MCP clients
+└── daemon.ts     # runDaemon() - HTTP server with /mcp, /health, /tools
 ```
 
 ## Key Patterns
 
 **Tool namespacing:**
-```rust
-// protocol/types.rs
-pub const NAMESPACE_SEPARATOR: &str = "__";
-pub fn namespace_tool(mcp_name: &str, tool_name: &str) -> String
-pub fn parse_namespaced_tool(namespaced: &str) -> Option<(&str, &str)>
+```typescript
+// types.ts
+export const NAMESPACE_SEPARATOR = "__";
+export function namespaceTools(mcpName: string, toolName: string): string
+export function parseNamespacedTool(namespaced: string): { mcp: string; tool: string } | null
 ```
 
 **Request flow:**
 ```
-Client request → server/stdio.rs → Router.handle_request() → McpManager.call_tool() → StdioClient
+Client request → server.ts → Router.handleRequest() → McpManager.callTool() → StdioClient
 ```
 
 **Config location:**
-- macOS: `~/Library/Application Support/mcp-bridge/config.toml`
-- Linux: `~/.config/mcp-bridge/config.toml`
-
-## Dependencies
-
-- `tokio` - async runtime
-- `clap` - CLI parsing
-- `serde` / `toml` / `serde_json` - serialization
-- `axum` - HTTP server (daemon mode)
-- `tracing` - logging
+- macOS: `~/Library/Application Support/mcp-bridge/config.json`
+- Linux: `~/.config/mcp-bridge/config.json`
 
 ## Conventions
 
-- Logs go to stderr (stdout is for MCP protocol)
+- Logs go to stderr (`console.error`), stdout is for MCP protocol (`console.log`)
 - All MCP communication is JSON-RPC 2.0, newline-delimited
 - Protocol version: `2024-11-05`
-- Error codes follow JSON-RPC spec (see `protocol/types.rs::error_codes`)
+- Error codes in `types.ts::ErrorCodes`
+
+## Commands
+
+```bash
+npm run build      # compile TypeScript
+npm run dev        # watch mode
+npm run typecheck  # type check only
+node dist/cli.js   # run CLI
+```
 
 ## Testing
 
 ```bash
-cargo test                    # unit tests
-cargo build && ./target/debug/mcp-bridge list   # manual CLI test
+node dist/cli.js list                    # test CLI
+node dist/cli.js add echo npx -y @modelcontextprotocol/server-everything
+node dist/cli.js serve                   # then send JSON-RPC to stdin
 ```
 
-To test with a real MCP:
-```bash
-mcp-bridge add echo npx -y @modelcontextprotocol/server-everything
-mcp-bridge serve   # then send JSON-RPC to stdin
-```
+## HTTP Daemon Endpoints
+
+- `GET /health` - health check, returns connected MCPs
+- `POST /mcp` - JSON-RPC endpoint for MCP requests
+- `GET /tools` - list all aggregated tools
 
 ## Future Plans
 
@@ -98,3 +101,4 @@ mcp-bridge serve   # then send JSON-RPC to stdin
 2. **SSE transport** - Connect to remote MCPs over HTTP
 3. **Tool filtering** - Allow/block specific tools per MCP
 4. **Status dashboard** - Show connected MCPs, tool counts, errors
+5. **npm publish** - Publish to npm registry

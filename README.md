@@ -15,7 +15,13 @@ MCP aggregator - connect to multiple MCP servers through a single endpoint.
 ## Install
 
 ```bash
-cargo install --path .
+npm install -g mcp-bridge
+```
+
+Or run directly with npx:
+
+```bash
+npx mcp-bridge --help
 ```
 
 ## Usage
@@ -39,8 +45,8 @@ mcp-bridge remove github
 {
   "mcpServers": {
     "bridge": {
-      "command": "mcp-bridge",
-      "args": ["serve"]
+      "command": "npx",
+      "args": ["mcp-bridge", "serve"]
     }
   }
 }
@@ -64,25 +70,25 @@ slack   + send_message  →  slack__send_message
 ## Config
 
 Stored at:
-- macOS: `~/Library/Application Support/mcp-bridge/config.toml`
-- Linux: `~/.config/mcp-bridge/config.toml`
+- macOS: `~/Library/Application Support/mcp-bridge/config.json`
+- Linux: `~/.config/mcp-bridge/config.json`
 
-```toml
-[settings]
-log_level = "info"
-daemon_port = 3000
-
-[[servers]]
-name = "github"
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-github"]
-enabled = true
-
-[[servers]]
-name = "fs"
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
-enabled = true
+```json
+{
+  "settings": {
+    "logLevel": "info",
+    "daemonPort": 3000
+  },
+  "servers": [
+    {
+      "name": "github",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {},
+      "enabled": true
+    }
+  ]
+}
 ```
 
 ## Architecture
@@ -96,8 +102,8 @@ enabled = true
 ┌────────────────────────────────────────────────────┐
 │                    mcp-bridge                      │
 │  ┌──────────┐    ┌────────────┐    ┌───────────┐  │
-│  │  Server  │───▶│ Aggregator │───▶│  Manager  │  │
-│  │stdio/http│    │   Router   │    │           │  │
+│  │  Server  │───▶│   Router   │───▶│  Manager  │  │
+│  │stdio/http│    │            │    │           │  │
 │  └──────────┘    └────────────┘    └─────┬─────┘  │
 │                                          │        │
 │                    ┌─────────────────────┼────┐   │
