@@ -1,6 +1,7 @@
 import { StdioClient } from "./client.js";
 import type { Config, McpServerConfig, Tool, ToolCallResult } from "./types.js";
 import { namespaceTools, parseNamespacedTool } from "./types.js";
+import { logToolCall } from "./logger.js";
 
 export class McpManager {
   private clients = new Map<string, StdioClient>();
@@ -67,7 +68,28 @@ export class McpManager {
       throw new Error(`MCP server '${parsed.mcp}' not connected`);
     }
 
-    return client.callTool({ name: parsed.tool, arguments: args });
+    const startTime = Date.now();
+    let success = true;
+    let error: string | undefined;
+
+    try {
+      const result = await client.callTool({ name: parsed.tool, arguments: args });
+      success = !result.isError;
+      return result;
+    } catch (e) {
+      success = false;
+      error = e instanceof Error ? e.message : String(e);
+      throw e;
+    } finally {
+      logToolCall({
+        mcp: parsed.mcp,
+        tool: parsed.tool,
+        args,
+        durationMs: Date.now() - startTime,
+        success,
+        error,
+      });
+    }
   }
 
   getConnectedMcps(): string[] {

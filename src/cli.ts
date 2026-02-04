@@ -4,6 +4,7 @@ import { program } from "commander";
 import { loadConfig, saveConfig, addServer, removeServer } from "./config.js";
 import { runStdioServer } from "./server.js";
 import { runDaemon } from "./daemon.js";
+import { readLogs, watchLogs, formatLogEntry, formatLogHeader, formatWatchingHeader } from "./logger.js";
 import type { McpServerConfig } from "./types.js";
 
 program
@@ -93,6 +94,55 @@ program
   .action(async (options: { port: string }) => {
     const config = loadConfig();
     await runDaemon(config, parseInt(options.port, 10));
+  });
+
+program
+  .command("logs")
+  .description("View tool usage logs")
+  .option("-f, --follow", "Follow logs in real-time")
+  .option("-n, --limit <count>", "Number of entries to show", "20")
+  .option("-a, --all", "Show all entries (no limit)")
+  .action(async (options: { follow?: boolean; limit: string; all?: boolean }) => {
+    if (options.follow) {
+      // Live mode
+      const entries = readLogs(10);
+
+      if (entries.length > 0) {
+        console.log(formatLogHeader(entries.length, entries.length));
+        for (const entry of entries) {
+          console.log(formatLogEntry(entry, { showDate: true }));
+        }
+        console.log();
+      }
+
+      console.log(formatWatchingHeader());
+
+      const stop = await watchLogs((entry) => {
+        console.log(formatLogEntry(entry));
+      });
+
+      process.on("SIGINT", () => {
+        stop();
+        console.log("\n");
+        process.exit(0);
+      });
+    } else {
+      // Static mode
+      const limit = options.all ? undefined : parseInt(options.limit, 10);
+      const allEntries = readLogs();
+      const entries = limit ? allEntries.slice(-limit) : allEntries;
+
+      if (entries.length === 0) {
+        console.log("No usage logs yet. Logs are recorded when tools are called via the bridge.");
+        return;
+      }
+
+      console.log(formatLogHeader(entries.length, allEntries.length));
+
+      for (const entry of entries) {
+        console.log(formatLogEntry(entry, { showDate: true }));
+      }
+    }
   });
 
 program.parse();
