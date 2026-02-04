@@ -13,6 +13,11 @@ export interface LogEntry {
   error?: string;
 }
 
+// Keep last 5000 entries max (~500KB-1MB depending on args)
+const MAX_LOG_ENTRIES = 5000;
+// Rotate when we hit 6000 (trim back to 5000)
+const ROTATE_THRESHOLD = 6000;
+
 function getLogDir(): string {
   if (process.platform === "darwin") {
     return path.join(os.homedir(), "Library", "Application Support", "mcp-bridge");
@@ -35,6 +40,26 @@ export function logToolCall(entry: Omit<LogEntry, "timestamp">): void {
 
   const logPath = getLogPath();
   fs.appendFileSync(logPath, JSON.stringify(logEntry) + "\n");
+
+  // Check if rotation needed (do this async-ish, don't block)
+  setImmediate(() => rotateIfNeeded(logPath));
+}
+
+function rotateIfNeeded(logPath: string): void {
+  try {
+    if (!fs.existsSync(logPath)) return;
+
+    const content = fs.readFileSync(logPath, "utf-8");
+    const lines = content.trim().split("\n").filter(Boolean);
+
+    if (lines.length > ROTATE_THRESHOLD) {
+      // Keep only the last MAX_LOG_ENTRIES
+      const trimmed = lines.slice(-MAX_LOG_ENTRIES);
+      fs.writeFileSync(logPath, trimmed.join("\n") + "\n");
+    }
+  } catch {
+    // Ignore rotation errors, not critical
+  }
 }
 
 export function readLogs(limit?: number): LogEntry[] {
