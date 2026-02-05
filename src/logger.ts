@@ -87,6 +87,81 @@ export function readLogs(limit?: number): LogEntry[] {
   return entries;
 }
 
+export interface LogStats {
+  totalCalls: number;
+  successCount: number;
+  failureCount: number;
+  successRate: number;
+  avgDurationMs: number;
+  byMcp: Record<string, { calls: number; successCount: number; successRate: number; avgDurationMs: number }>;
+  byTool: Record<string, { calls: number; successCount: number; successRate: number; avgDurationMs: number }>;
+}
+
+export function getStats(): LogStats {
+  const entries = readLogs();
+
+  if (entries.length === 0) {
+    return {
+      totalCalls: 0,
+      successCount: 0,
+      failureCount: 0,
+      successRate: 0,
+      avgDurationMs: 0,
+      byMcp: {},
+      byTool: {},
+    };
+  }
+
+  const successCount = entries.filter((e) => e.success).length;
+  const totalDuration = entries.reduce((sum, e) => sum + e.durationMs, 0);
+
+  const byMcp: Record<string, { calls: number; successCount: number; totalDuration: number }> = {};
+  const byTool: Record<string, { calls: number; successCount: number; totalDuration: number }> = {};
+
+  for (const entry of entries) {
+    // Aggregate by MCP
+    if (!byMcp[entry.mcp]) {
+      byMcp[entry.mcp] = { calls: 0, successCount: 0, totalDuration: 0 };
+    }
+    byMcp[entry.mcp].calls++;
+    if (entry.success) byMcp[entry.mcp].successCount++;
+    byMcp[entry.mcp].totalDuration += entry.durationMs;
+
+    // Aggregate by tool (namespaced)
+    const toolKey = `${entry.mcp}__${entry.tool}`;
+    if (!byTool[toolKey]) {
+      byTool[toolKey] = { calls: 0, successCount: 0, totalDuration: 0 };
+    }
+    byTool[toolKey].calls++;
+    if (entry.success) byTool[toolKey].successCount++;
+    byTool[toolKey].totalDuration += entry.durationMs;
+  }
+
+  // Transform to final format
+  const formatStats = (data: Record<string, { calls: number; successCount: number; totalDuration: number }>) => {
+    const result: Record<string, { calls: number; successCount: number; successRate: number; avgDurationMs: number }> = {};
+    for (const [key, val] of Object.entries(data)) {
+      result[key] = {
+        calls: val.calls,
+        successCount: val.successCount,
+        successRate: val.calls > 0 ? val.successCount / val.calls : 0,
+        avgDurationMs: val.calls > 0 ? Math.round(val.totalDuration / val.calls) : 0,
+      };
+    }
+    return result;
+  };
+
+  return {
+    totalCalls: entries.length,
+    successCount,
+    failureCount: entries.length - successCount,
+    successRate: entries.length > 0 ? successCount / entries.length : 0,
+    avgDurationMs: entries.length > 0 ? Math.round(totalDuration / entries.length) : 0,
+    byMcp: formatStats(byMcp),
+    byTool: formatStats(byTool),
+  };
+}
+
 export async function watchLogs(onEntry: (entry: LogEntry) => void): Promise<() => void> {
   const logPath = getLogPath();
   const logDir = getLogDir();

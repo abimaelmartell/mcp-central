@@ -1,7 +1,9 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import type { Config, JsonRpcRequest } from "./types.js";
 import { McpManager } from "./manager.js";
 import { Router } from "./router.js";
+import { registerApiRoutes } from "./api.js";
 
 export async function runDaemon(config: Config, port: number): Promise<void> {
   const manager = new McpManager();
@@ -17,6 +19,12 @@ export async function runDaemon(config: Config, port: number): Promise<void> {
   const router = new Router(manager);
 
   const app = Fastify({ logger: false });
+
+  // Enable CORS for browser access
+  await app.register(cors, { origin: true });
+
+  // Register management API routes
+  registerApiRoutes(app, manager);
 
   app.get("/health", async () => {
     return {
@@ -40,6 +48,7 @@ export async function runDaemon(config: Config, port: number): Promise<void> {
     await app.listen({ port, host: "0.0.0.0" });
     console.error(`MCP bridge daemon listening on http://0.0.0.0:${port}`);
     console.error("Endpoints: /health, /mcp (POST), /tools");
+    console.error("API: /api/logs, /api/logs/stream, /api/servers, /api/stats, /api/reload");
   } catch (err) {
     console.error("Failed to start daemon:", err);
     process.exit(1);

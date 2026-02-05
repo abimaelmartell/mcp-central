@@ -51,6 +51,19 @@ export function removeServer(config: Config, name: string): McpServerConfig {
   return config.servers.splice(idx, 1)[0];
 }
 
+export function updateServer(
+  config: Config,
+  name: string,
+  updates: Partial<Omit<McpServerConfig, "name">>
+): McpServerConfig {
+  const server = config.servers.find((s) => s.name === name);
+  if (!server) {
+    throw new Error(`Server '${name}' not found`);
+  }
+  Object.assign(server, updates);
+  return server;
+}
+
 export function getEnabledServers(config: Config): McpServerConfig[] {
   return config.servers.filter((s) => s.enabled);
 }
