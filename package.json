@@ -25,6 +25,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abimaelmartell/mcp-central.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abimaelmartell/mcp-central/issues"
+  },
+  "homepage": "https://github.com/abimaelmartell/mcp-central#readme",
   "dependencies": {
     "@fastify/cors": "^11.2.0",
     "commander": "^12.1.0",
